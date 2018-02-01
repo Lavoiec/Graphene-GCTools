@@ -1,6 +1,7 @@
 # Graphene-GCTools
 
-An initial dive into adapting GraphQL via Graphene-SQLAlchemy for broader use with the Elgg platform and, more specifically, with GCconnex.
+An initial dive into adapting GraphQL via [Graphene-SQLAlchemy](https://github.com/graphql-python/graphene-sqlalchemy) for broader use with the Elgg platform and, more specifically, with GCconnex.
+
 The file is meant to serve as a prototype for a backend of the Self Serve Data App. As such, it has absolutely no support
 for mutations--only querying complex structures
 
