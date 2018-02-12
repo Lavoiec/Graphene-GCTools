@@ -277,7 +277,8 @@ class Content(SQLAlchemyObjectType):
         interfaces = (relay.Node, Page)
 
     author = graphene.Field(Users)
-    post = graphene.Field(ObjectsEntity)
+    title = graphene.String()
+    description = graphene.String()
     comments = graphene.List(Comment)
     tags = graphene.List(EntityProperties)
 
@@ -297,19 +298,17 @@ class Content(SQLAlchemyObjectType):
                self.owner_guid == UsersModel.guid
                ).first()
 
-    def resolve_post(self, info, **args):
-        """
-        Gets the actual post, which is broken
-        into the title and description and stored in the
-        elggobjects_entity table.
 
+    def resolve_title(self, info, **args):
 
-        SELECT oe.*
-        FROM elggobjects_entity oe
-        WHERE oe.guid = [CONTENT GUID] 
-        """
-        return ObjectsEntity.get_query(info).filter(
-        self.guid == ObjectsEntityModel.guid).first()
+        return db_session.query(ObjectsEntityModel.title).filter(
+        self.guid == ObjectsEntityModel.guid).scalar()
+
+    def resolve_description(self, info, **args):
+        
+      return db_session.query(ObjectsEntityModel.description).filter(
+        self.guid == ObjectsEntityModel.guid).scalar()
+   
 
 
 
