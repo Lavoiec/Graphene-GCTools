@@ -30,7 +30,7 @@ class Page(graphene.Interface):
     is their own respective page, they will all have a pageviews field.
 
     Placing this interface over those Classes allows them to query their pageviews
-    using gcga.pa
+    using gcga.py
     """
     # The pageviews integer that will be returned
     # Filterable by guid
