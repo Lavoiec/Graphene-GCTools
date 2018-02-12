@@ -242,7 +242,7 @@ class Comment(SQLAlchemyObjectType):
     # Because we're letting the author be an entire user object,
     # we are calling a list to nest the author object in.
     # This allows for an obscene amount of customization
-    author = graphene.List(Users)
+    author = graphene.Field(Users)
 
     def resolve_author(self, info, **args):
         """
@@ -262,7 +262,7 @@ class Comment(SQLAlchemyObjectType):
                    where(
                        EntitiesModel.guid == self.guid
                    )
-               )).all()     
+               )).first()     
 
 class Content(SQLAlchemyObjectType):
     """
@@ -276,8 +276,8 @@ class Content(SQLAlchemyObjectType):
         model = EntitiesModel
         interfaces = (relay.Node, Page)
 
-    author = graphene.List(Users)
-    post = graphene.List(ObjectsEntity)
+    author = graphene.Field(Users)
+    post = graphene.Field(ObjectsEntity)
     comments = graphene.List(Comment)
     tags = graphene.List(EntityProperties)
 
@@ -295,7 +295,7 @@ class Content(SQLAlchemyObjectType):
         """
         return Users.get_query(info).filter(
                self.owner_guid == UsersModel.guid
-               ).all()
+               ).first()
 
     def resolve_post(self, info, **args):
         """
@@ -309,7 +309,7 @@ class Content(SQLAlchemyObjectType):
         WHERE oe.guid = [CONTENT GUID] 
         """
         return ObjectsEntity.get_query(info).filter(
-        self.guid == ObjectsEntityModel.guid)
+        self.guid == ObjectsEntityModel.guid).first()
 
 
 
@@ -469,8 +469,8 @@ class Query(graphene.ObjectType):
     # Gathers all the entities. Do not do. This returns millions of things
     all_entities = SQLAlchemyConnectionField(Entities)
     user = graphene.List(Users, name=graphene.String())
-    group = graphene.List(Group, guid=graphene.Int())
-    content = graphene.List(Content, guid=graphene.Int())
+    group = graphene.Field(Group, guid=graphene.Int())
+    content = graphene.Field(Content, guid=graphene.Int())
 
     def resolve_user(self, info, **args):
         name = args.get("name")
@@ -487,7 +487,7 @@ class Query(graphene.ObjectType):
 
         groupdata_query = Group.get_query(info)
 
-        groups = groupdata_query.filter(GroupsModel.guid == guid).all()
+        groups = groupdata_query.filter(GroupsModel.guid == guid).first()
 
         return groups
 
@@ -497,7 +497,7 @@ class Query(graphene.ObjectType):
 
         return Content.get_query(info).filter(
                     guid == EntitiesModel.guid
-            ).all()
+            ).first()
 
 
         
