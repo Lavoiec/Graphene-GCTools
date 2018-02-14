@@ -25,7 +25,7 @@ def find(key, dictionary):
                     yield result
 
                     
-def split_nested_dict(df, col, join_back=False, drop=False):
+def split_nested_dict(df, col, concat=False, drop=False):
     """
     Splits a column that is a nested dictionary into a dataframe
     Each key is their own col
@@ -59,7 +59,7 @@ def split_nested_dict(df, col, join_back=False, drop=False):
     # Renaming the dataframe with the keys
     new_df.columns = key_list
     
-    if not join_back:
+    if not concat:
         return new_df
     
     
