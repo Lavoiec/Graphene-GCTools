@@ -100,6 +100,7 @@ class Colleague(SQLAlchemyObjectType):
     # A list that follows the ObjectsEntity model, queryable on the type of bio (spec)
     # and whether it contains a certain string inside or not
     bio = graphene.List(ObjectsEntity, spec=graphene.String(), contains = graphene.String())
+    groups_joined = graphene.List(lambda: Group) 
 
 
     def resolve_bio(self, info, **args):
@@ -144,6 +145,21 @@ class Colleague(SQLAlchemyObjectType):
             )
     ).filter(ObjectsEntityModel.title.contains(contains) | ObjectsEntityModel.description.contains(contains)).all()
 
+    def resolve_groups_joined(self, info, **args):
+        """
+        Grabbing groups joined
+        """
+
+        return Group.get_query(info).filter(
+                    GroupsModel.guid.in_(
+                        select([RelationshipsModel.guid_two]).\
+                        where(
+                            and_(
+                            RelationshipsModel.guid_one == self.guid,
+                            RelationshipsModel.relationship == 'member',
+                        )))
+                    ).all()
+
 class Users(SQLAlchemyObjectType):
     """
     Imports the user table, and other important
@@ -157,6 +173,8 @@ class Users(SQLAlchemyObjectType):
     # The parameters we will look to resolve
     colleagues = graphene.List(Colleague)
     bio = graphene.List(ObjectsEntity, spec=graphene.String(), contains=graphene.String())
+    time_created = graphene.Int()
+    groups_joined = graphene.List(lambda: Group) # Lambda means it can reference before assignment
 
     def resolve_colleagues(self, info, **args):
         """
@@ -226,6 +244,33 @@ class Users(SQLAlchemyObjectType):
     ).filter(ObjectsEntityModel.title.contains(contains) |
             ObjectsEntityModel.description.contains(contains)
             ).all()
+
+
+    def resolve_time_created(self, info, **args):
+        """
+        Grabbing the user registration
+        """
+        return db_session.query(EntitiesModel.time_created).\
+            filter(
+                self.guid == EntitiesModel.guid
+            ).scalar()
+
+
+    def resolve_groups_joined(self, info, **args):
+        """
+        Grabbing groups joined
+        """
+
+        return Group.get_query(info).filter(
+                    GroupsModel.guid.in_(
+                        select([RelationshipsModel.guid_two]).\
+                        where(
+                            and_(
+                            RelationshipsModel.guid_one == self.guid,
+                            RelationshipsModel.relationship == 'member',
+                        )))
+                    ).all()
+
 
 class Comment(SQLAlchemyObjectType):
     """
@@ -309,8 +354,6 @@ class Content(SQLAlchemyObjectType):
       return db_session.query(ObjectsEntityModel.description).filter(
         self.guid == ObjectsEntityModel.guid).scalar()
    
-
-
 
     def resolve_comments(self, info, **args):
         """
