@@ -511,8 +511,10 @@ class Query(graphene.ObjectType):
     # Gathers all the entities. Do not do. This returns millions of things
     all_entities = SQLAlchemyConnectionField(Entities)
     user = graphene.List(Users, name=graphene.String())
-    group = graphene.Field(Group, guid=graphene.Int())
+    group = graphene.Field(Group, guid=graphene.Int(), name=graphene.String())
     content = graphene.Field(Content, guid=graphene.Int())
+    # Plural groups
+    groups = graphene.List(Group, name=graphene.String())
 
     def resolve_user(self, info, **args):
         name = args.get("name")
@@ -526,10 +528,15 @@ class Query(graphene.ObjectType):
     def resolve_group(self, info, **args):
 
         guid = args.get("guid")
+        name = args.get("name")
 
         groupdata_query = Group.get_query(info)
 
-        groups = groupdata_query.filter(GroupsModel.guid == guid).first()
+        if guid is not None:
+            groups = groupdata_query.filter(GroupsModel.guid == guid).first()
+
+        if name is not None:
+            groups = groupdata_query.filter(GroupsModel.name.contains(name)).first()
 
         return groups
 
@@ -542,7 +549,17 @@ class Query(graphene.ObjectType):
             ).first()
 
 
-        
+    def resolve_groups(self, info, **args):
+
+        guid = args.get("guid")
+        name = args.get("name")
+
+        groupdata_query = Group.get_query(info)
+
+        if name is not None:
+            groups = groupdata_query.filter(GroupsModel.name.contains(name)).all()
+
+        return groups
 
 
 schema = graphene.Schema(query=Query)
