@@ -326,6 +326,7 @@ class Content(SQLAlchemyObjectType):
     description = graphene.String()
     comments = graphene.List(Comment)
     tags = graphene.List(EntityProperties)
+    audience = graphene.List(EntityProperties)
 
     def resolve_author(self, info, **args):
         """
@@ -403,6 +404,16 @@ class Content(SQLAlchemyObjectType):
         
   
         return tags
+
+    def resolve_audience(self, info, **args):
+        entity_data_model = EntityProperties.get_query(info)
+        return entity_data_model.filter(
+            MetastringsModel.id == MetadataModel.value_id,
+            MetadataModel.name_id == 35557,
+            MetadataModel.entity_guid == self.guid
+            ).all()
+        
+  
 
 
 class Entities(SQLAlchemyObjectType):
@@ -497,6 +508,36 @@ class Group(SQLAlchemyObjectType):
     ).all()
 
 
+class Community(SQLAlchemyObjectType):
+
+    class Meta:
+        model = MetastringsModel
+        interfaces = (relay.Node,)
+
+    groups = graphene.List(Group)
+
+
+
+    def resolve_groups(self, info, **args):
+
+        return Group.get_query(info).filter(
+            GroupsModel.guid.in_(
+                select([GroupsModel.guid]).\
+                    where(
+                        and_(
+                            EntitiesModel.container_guid == GroupsModel.guid,
+                            MetadataModel.entity_guid == EntitiesModel.guid,
+                            MetadataModel.name_id == 35557,
+                            MetadataModel.value_id == self.id
+
+                        )
+                    )
+
+            )
+        )
+
+
+
 class Query(graphene.ObjectType):
     """
     Main query class. This is connected to the app.py
@@ -515,6 +556,9 @@ class Query(graphene.ObjectType):
     content = graphene.Field(Content, guid=graphene.Int())
     # Plural groups
     groups = graphene.List(Group, name=graphene.String())
+    community = graphene.Field(Community, name=graphene.String())
+    communities = graphene.List(Community)
+
 
     def resolve_user(self, info, **args):
         name = args.get("name")
@@ -560,6 +604,25 @@ class Query(graphene.ObjectType):
             groups = groupdata_query.filter(GroupsModel.name.contains(name)).all()
 
         return groups
+
+    def resolve_community(self, info, **args):
+        name = args.get("name")
+
+        communitydata_query = Community.get_query(info)
+        return communitydata_query.filter(
+            MetastringsModel.string == name,
+            MetadataModel.value_id == MetastringsModel.id,
+            MetadataModel.name_id == 35557
+        ).first()
+
+    def resolve_communities(self, info, **args):
+
+        communitydata_query = Community.get_query(info)
+        return communitydata_query.filter(
+            MetadataModel.value_id == MetastringsModel.id,
+            MetadataModel.name_id == 35557
+        ).distinct()
+
 
 
 schema = graphene.Schema(query=Query)
